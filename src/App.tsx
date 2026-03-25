@@ -24,14 +24,94 @@ import {
 } from './state'
 
 type ViewMode = 'unknown' | 'all' | 'known' | 'keywords' | 'proper'
+type UiLanguage = 'en' | 'zh'
 
-const viewLabels: Array<{ value: ViewMode; label: string }> = [
-  { value: 'unknown', label: 'Unknown words' },
-  { value: 'all', label: 'All vocabulary' },
-  { value: 'known', label: 'Known words' },
-  { value: 'keywords', label: 'Key words' },
-  { value: 'proper', label: 'Names & places' },
-]
+const UI_COPY: Record<UiLanguage, Record<string, string>> = {
+  en: {
+    badge: 'Novel Reader Audit',
+    language: 'Language',
+    heroTitle: 'Find out whether a novel is readable before you sink hours into it.',
+    heroDescription: 'Upload a plain text book, compare its vocabulary against your own known-word list, and decide whether the reading experience will feel comfortable, tolerable, or painful.',
+    upload: 'Upload',
+    uploadDesc: 'TXT books only. Analysis runs locally in your browser.',
+    results: 'Results',
+    resultsDesc: 'Vocabulary counts, CEFR estimate, key words, and memorize lists.',
+    knownWords: 'Known words',
+    knownWordsDesc: 'Your vocabulary list stays in localStorage and updates readability instantly.',
+    selection: 'Selection',
+    selectionDesc: 'Multi-select unknown words and promote them into your known list.',
+    exampleNovels: 'Example novels',
+    allSamplesSaved: 'All samples are already saved.',
+    uploadBook: 'Upload book',
+    chooseNovel: 'Choose a .txt novel',
+    chooseNovelHint: 'Click here to select a book file and store the analysis locally.',
+    status: 'Status',
+    statusIdle: 'Upload a .txt novel and the browser will analyze it locally.',
+    statusWorking: 'Working through the text now...',
+    clearSearch: 'Clear search',
+    clearSavedReports: 'Clear saved reports',
+    knownVocabulary: 'Known vocabulary',
+    clear: 'Clear',
+    knownWordsPlaceholder: 'Paste known words here, separated by spaces, commas, or new lines.',
+    addWords: 'Add words',
+    resetField: 'Reset field',
+    noKnownWords: 'No known words yet.',
+    savedAnalyses: 'Saved analyses',
+    uploadFirstReport: 'Upload a book to create the first report.',
+    wordsUnit: 'words',
+    remove: 'Remove',
+    sample: 'Sample',
+    viewUnknown: 'Unknown words',
+    viewAll: 'All vocabulary',
+    viewKnown: 'Known words',
+    viewKeywords: 'Key words',
+    viewProper: 'Names & places',
+    noNovel: 'No novel analyzed yet',
+    noNovelDescription: 'Upload a plain text file to see vocabulary size, CEFR distribution, known-word coverage, key words, and a complete word table that you can use to grow your reading comfort.',
+  },
+  zh: {
+    badge: '小说可读性审计',
+    language: '语言',
+    heroTitle: '在投入大量时间前，先判断这本小说是否适合你阅读。',
+    heroDescription: '上传纯文本小说，对照你的已知词表，快速判断阅读体验是轻松、可读，还是吃力。',
+    upload: '上传',
+    uploadDesc: '仅支持 TXT。分析在浏览器本地完成。',
+    results: '结果',
+    resultsDesc: '词汇统计、CEFR 估计、关键词与记忆词清单。',
+    knownWords: '已知词',
+    knownWordsDesc: '你的词表保存在 localStorage，并实时更新可读性。',
+    selection: '选择',
+    selectionDesc: '可多选未知词并加入已知词。',
+    exampleNovels: '示例小说',
+    allSamplesSaved: '所有示例已保存。',
+    uploadBook: '上传书籍',
+    chooseNovel: '选择 .txt 小说',
+    chooseNovelHint: '点击选择书籍文件，分析结果会保存在本地。',
+    status: '状态',
+    statusIdle: '上传 .txt 小说后，浏览器将本地分析。',
+    statusWorking: '正在分析文本...',
+    clearSearch: '清空搜索',
+    clearSavedReports: '清空已保存分析',
+    knownVocabulary: '已知词汇',
+    clear: '清空',
+    knownWordsPlaceholder: '在这里粘贴已知词，可用空格、逗号或换行分隔。',
+    addWords: '添加词汇',
+    resetField: '重置输入',
+    noKnownWords: '暂无已知词。',
+    savedAnalyses: '已保存分析',
+    uploadFirstReport: '上传一本书以创建第一份分析。',
+    wordsUnit: '词',
+    remove: '删除',
+    sample: '示例',
+    viewUnknown: '未知词',
+    viewAll: '全部词汇',
+    viewKnown: '已知词',
+    viewKeywords: '关键词',
+    viewProper: '人名地名',
+    noNovel: '还没有分析任何小说',
+    noNovelDescription: '上传纯文本后，即可查看词汇规模、CEFR 分布、已知词覆盖率、关键词以及完整词表，帮助你更轻松阅读。',
+  },
+}
 
 const PAGE_SIZE = 20
 
@@ -91,11 +171,11 @@ function isNestedInteractiveTarget(target: EventTarget | null): boolean {
   return Boolean(target.closest('button,input,a,textarea,select,label'))
 }
 
-function renderTags(entry: DerivedVocabularyEntry) {
+function renderTags(entry: DerivedVocabularyEntry, labels: Record<string, string>) {
   return (
     <div className="flex flex-wrap gap-2">
-      {entry.isKnown && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-950">known</span>}
-      {entry.isProperNoun && <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-950">name</span>}
+      {entry.isKnown && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-950">{labels.viewKnown}</span>}
+      {entry.isProperNoun && <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-950">{labels.viewProper}</span>}
       {entry.isStopword && <span className="rounded-full bg-stone-200 px-2.5 py-1 text-xs font-semibold text-stone-700">function</span>}
       {!entry.isKnown && !entry.isStopword && !entry.isProperNoun && (
         <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-950">memorize</span>
@@ -115,6 +195,7 @@ function App({
   initialReports = [],
   initialActiveReportId = null,
 }: AppProps) {
+  const [uiLanguage, setUiLanguage] = useState<UiLanguage>('en')
   const [reports, setReports] = useAtom(reportsAtom)
   const [activeReportId, setActiveReportId] = useAtom(activeReportIdAtom)
   const [knownWords, setKnownWords] = useAtom(knownWordsAtom)
@@ -129,7 +210,30 @@ function App({
   const [selectionAnchor, setSelectionAnchor] = useState<string | null>(null)
   const [rangeSelectionCount, setRangeSelectionCount] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
-  const [status, setStatus] = useState('Upload a .txt novel and the browser will analyze it locally.')
+  const [status, setStatus] = useState(UI_COPY.en.statusIdle)
+
+  useEffect(() => {
+    const storedLanguage = typeof window !== 'undefined' ? window.localStorage.getItem('novel-reader-language') : null
+    if (storedLanguage === 'en' || storedLanguage === 'zh') {
+      setUiLanguage(storedLanguage)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('novel-reader-language', uiLanguage)
+    }
+  }, [uiLanguage])
+
+  const labels = UI_COPY[uiLanguage]
+
+  const viewLabels: Array<{ value: ViewMode; label: string }> = [
+    { value: 'unknown', label: labels.viewUnknown },
+    { value: 'all', label: labels.viewAll },
+    { value: 'known', label: labels.viewKnown },
+    { value: 'keywords', label: labels.viewKeywords },
+    { value: 'proper', label: labels.viewProper },
+  ]
 
   const deferredSearch = useDeferredValue(search)
   const activeReport = reports.find((report) => report.id === activeReportId) ?? reports[0] ?? null
@@ -198,12 +302,16 @@ function App({
     } else if (initialExampleSlug) {
       const selectedExample = exampleNovels.find((example) => example.slug === initialExampleSlug)
       if (selectedExample) {
-        setStatus(`Server-rendered example loaded: ${selectedExample.title}.`)
+        setStatus(
+          uiLanguage === 'zh'
+            ? `已加载服务端示例：${selectedExample.title}。`
+            : `Server-rendered example loaded: ${selectedExample.title}.`,
+        )
       }
     }
 
     initialHydratedRef.current = true
-  }, [exampleError, exampleNovels, initialActiveReportId, initialExampleSlug, initialReports, setActiveReportId, setReports])
+  }, [exampleError, exampleNovels, initialActiveReportId, initialExampleSlug, initialReports, setActiveReportId, setReports, uiLanguage])
 
   const totalPages = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE))
   const safeCurrentPage = Math.min(currentPage, totalPages)
@@ -217,7 +325,7 @@ function App({
     }
 
     setIsAnalyzing(true)
-    setStatus(`Analyzing ${file.name}...`)
+    setStatus(uiLanguage === 'zh' ? `正在分析 ${file.name}...` : `Analyzing ${file.name}...`)
 
     try {
       const text = await file.text()
@@ -229,12 +337,12 @@ function App({
           setActiveReportId(report.id)
           setSelectedWords([])
           setViewMode('unknown')
-          setStatus(`Finished analyzing ${file.name}.`)
+          setStatus(uiLanguage === 'zh' ? `${file.name} 分析完成。` : `Finished analyzing ${file.name}.`)
           setIsAnalyzing(false)
         })
       })
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Failed to read the file.')
+      setStatus(error instanceof Error ? error.message : (uiLanguage === 'zh' ? '读取文件失败。' : 'Failed to read the file.'))
       setIsAnalyzing(false)
     }
   }
@@ -356,34 +464,53 @@ function App({
         <section className="fade-up glass-card overflow-hidden rounded-[32px] border border-[var(--line)]">
           <div className="grid gap-6 px-6 py-8 sm:px-8 lg:grid-cols-[1.3fr_0.7fr] lg:px-10 lg:py-10">
             <div className="space-y-6">
-              <span className="inline-flex rounded-full border border-[var(--line)] bg-white/60 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent-strong)]">
-                Novel Reader Audit
-              </span>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="inline-flex rounded-full border border-[var(--line)] bg-white/60 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent-strong)]">
+                  {labels.badge}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">{labels.language}</span>
+                  <button
+                    type="button"
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${uiLanguage === 'en' ? 'border-[var(--accent)] bg-[var(--accent)] text-white' : 'border-[var(--line)] bg-white/80 text-[var(--ink)]'}`}
+                    onClick={() => setUiLanguage('en')}
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${uiLanguage === 'zh' ? 'border-[var(--accent)] bg-[var(--accent)] text-white' : 'border-[var(--line)] bg-white/80 text-[var(--ink)]'}`}
+                    onClick={() => setUiLanguage('zh')}
+                  >
+                    中文
+                  </button>
+                </div>
+              </div>
               <div className="space-y-4">
                 <h1 className="max-w-4xl font-[var(--font-display)] text-4xl leading-none tracking-[-0.05em] text-[var(--ink)] sm:text-5xl lg:text-7xl">
-                  Find out whether a novel is readable before you sink hours into it.
+                  {labels.heroTitle}
                 </h1>
                 <p className="max-w-2xl text-base leading-7 text-[var(--muted)] sm:text-lg">
-                  Upload a plain text book, compare its vocabulary against your own known-word list, and decide whether the reading experience will feel comfortable, tolerable, or painful.
+                  {labels.heroDescription}
                 </p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-3xl border border-[var(--line)] bg-white/70 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Upload</p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--ink)]">TXT books only. Analysis runs locally in your browser.</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">{labels.upload}</p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--ink)]">{labels.uploadDesc}</p>
                 </div>
                 <div className="rounded-3xl border border-[var(--line)] bg-white/70 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Results</p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--ink)]">Vocabulary counts, CEFR estimate, key words, and memorize lists.</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">{labels.results}</p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--ink)]">{labels.resultsDesc}</p>
                 </div>
                 <div className="rounded-3xl border border-[var(--line)] bg-white/70 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Known words</p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--ink)]">Your vocabulary list stays in localStorage and updates readability instantly.</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">{labels.knownWords}</p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--ink)]">{labels.knownWordsDesc}</p>
                 </div>
                 <div className="rounded-3xl border border-[var(--line)] bg-white/70 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Selection</p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--ink)]">Multi-select unknown words and promote them into your known list.</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">{labels.selection}</p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--ink)]">{labels.selectionDesc}</p>
                 </div>
               </div>
             </div>
@@ -391,11 +518,11 @@ function App({
             <div className="rounded-[28px] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,247,233,0.92))] p-5 sm:p-6">
               <div className="flex h-full flex-col gap-5">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Example novels</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">{labels.exampleNovels}</p>
                   <div className="mt-3 grid gap-3">
                     {availableExampleNovels.length === 0 ? (
                       <p className="rounded-[22px] border border-[var(--line)] bg-white/80 px-4 py-4 text-sm text-[var(--muted)]">
-                        All samples are already saved.
+                        {labels.allSamplesSaved}
                       </p>
                     ) : (
                       availableExampleNovels.map((example) => (
@@ -412,10 +539,10 @@ function App({
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Upload book</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">{labels.uploadBook}</p>
                   <label className="mt-3 flex cursor-pointer flex-col gap-3 rounded-[24px] border border-dashed border-[var(--accent)] bg-white/90 p-5 transition hover:-translate-y-0.5 hover:shadow-lg">
-                    <span className="font-[var(--font-display)] text-2xl text-[var(--ink)]">Choose a .txt novel</span>
-                    <span className="text-sm leading-6 text-[var(--muted)]">Click here to select a book file and store the analysis locally.</span>
+                    <span className="font-[var(--font-display)] text-2xl text-[var(--ink)]">{labels.chooseNovel}</span>
+                    <span className="text-sm leading-6 text-[var(--muted)]">{labels.chooseNovelHint}</span>
                     <input
                       className="hidden"
                       type="file"
@@ -429,8 +556,8 @@ function App({
                 </div>
 
                 <div className="rounded-[24px] border border-[var(--line)] bg-stone-950 px-4 py-4 text-stone-50">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">Status</p>
-                  <p className="mt-2 text-sm leading-6">{isAnalyzing ? 'Working through the text now...' : status}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">{labels.status}</p>
+                  <p className="mt-2 text-sm leading-6">{isAnalyzing ? labels.statusWorking : status}</p>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -439,7 +566,7 @@ function App({
                     type="button"
                     onClick={() => setSearch('')}
                   >
-                    Clear search
+                    {labels.clearSearch}
                   </button>
                   <button
                     className="rounded-2xl border border-rose-800/20 bg-rose-100/80 px-4 py-3 text-sm font-semibold text-rose-950 transition hover:bg-rose-200"
@@ -450,7 +577,7 @@ function App({
                       setSelectedWords([])
                     }}
                   >
-                    Clear saved reports
+                    {labels.clearSavedReports}
                   </button>
                 </div>
               </div>
@@ -463,7 +590,7 @@ function App({
             <div className="glass-card rounded-[28px] border border-[var(--line)] p-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Known vocabulary</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">{labels.knownVocabulary}</p>
                   <h2 className="mt-2 font-[var(--font-display)] text-3xl leading-none tracking-[-0.04em]">{knownWords.length}</h2>
                 </div>
                 <button
@@ -471,13 +598,13 @@ function App({
                   className="rounded-full border border-[var(--line)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]"
                   onClick={() => setKnownWords([])}
                 >
-                  Clear
+                  {labels.clear}
                 </button>
               </div>
 
               <textarea
                 className="mt-4 min-h-32 w-full rounded-[22px] border border-[var(--line)] bg-white/80 px-4 py-3 text-sm leading-6 outline-none transition focus:border-[var(--accent)]"
-                placeholder="Paste known words here, separated by spaces, commas, or new lines."
+                placeholder={labels.knownWordsPlaceholder}
                 value={knownWordsDraft}
                 onChange={(event) => setKnownWordsDraft(event.target.value)}
               />
@@ -488,20 +615,20 @@ function App({
                   className="rounded-2xl border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
                   onClick={addDraftKnownWords}
                 >
-                  Add words
+                  {labels.addWords}
                 </button>
                 <button
                   type="button"
                   className="rounded-2xl border border-[var(--line)] bg-white/80 px-4 py-2 text-sm font-semibold text-[var(--ink)]"
                   onClick={() => setKnownWordsDraft('')}
                 >
-                  Reset field
+                  {labels.resetField}
                 </button>
               </div>
 
               <div className="mt-4 flex max-h-72 flex-wrap gap-2 overflow-auto pr-1">
                 {knownWords.length === 0 ? (
-                  <p className="text-sm leading-6 text-[var(--muted)]">No known words yet.</p>
+                  <p className="text-sm leading-6 text-[var(--muted)]">{labels.noKnownWords}</p>
                 ) : (
                   knownWords.map((word) => (
                     <button
@@ -518,10 +645,10 @@ function App({
             </div>
 
             <div className="glass-card rounded-[28px] border border-[var(--line)] p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Saved analyses</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">{labels.savedAnalyses}</p>
               <div className="mt-4 flex max-h-[32rem] flex-col gap-3 overflow-auto pr-1">
                 {reports.length === 0 ? (
-                  <p className="text-sm leading-6 text-[var(--muted)]">Upload a book to create the first report.</p>
+                  <p className="text-sm leading-6 text-[var(--muted)]">{labels.uploadFirstReport}</p>
                 ) : (
                   reports.map((report) => (
                     <div
@@ -539,9 +666,9 @@ function App({
                         </p>
                       </button>
                       <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--muted)]">
-                        <span>{report.uniqueVocabulary} words</span>
+                        <span>{report.uniqueVocabulary} {labels.wordsUnit}</span>
                         <button type="button" className="font-semibold text-rose-700" onClick={() => deleteReport(report.id)}>
-                          Remove
+                          {labels.remove}
                         </button>
                       </div>
                     </div>
@@ -866,7 +993,7 @@ function App({
                               <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold text-[var(--ink)]">{entry.cefr}</span>
                             </div>
                             <div className="px-4 py-3 text-[var(--muted)]">{entry.rank?.toLocaleString() ?? '—'}</div>
-                            <div className="px-4 py-3">{renderTags(entry)}</div>
+                            <div className="px-4 py-3">{renderTags(entry, labels)}</div>
                           </div>
                         ))}
                       </div>
@@ -876,14 +1003,14 @@ function App({
               </>
             ) : (
               <div className="glass-card rounded-[32px] border border-[var(--line)] p-10 text-center">
-                <h2 className="font-[var(--font-display)] text-4xl tracking-[-0.05em] text-[var(--ink)]">No novel analyzed yet</h2>
+                <h2 className="font-[var(--font-display)] text-4xl tracking-[-0.05em] text-[var(--ink)]">{labels.noNovel}</h2>
                 <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[var(--muted)]">
-                  Upload a plain text file to see vocabulary size, CEFR distribution, known-word coverage, key words, and a complete word table that you can use to grow your reading comfort.
+                  {labels.noNovelDescription}
                 </p>
                 <div className="mx-auto mt-8 grid max-w-4xl gap-3 text-left sm:grid-cols-2">
                   {availableExampleNovels.length === 0 ? (
                     <p className="sm:col-span-2 rounded-[24px] border border-[var(--line)] bg-white/80 px-5 py-4 text-sm text-[var(--muted)]">
-                      All samples are already saved.
+                      {labels.allSamplesSaved}
                     </p>
                   ) : (
                     availableExampleNovels.map((example) => (
@@ -895,7 +1022,7 @@ function App({
                         <p className="font-semibold text-[var(--ink)]">{example.title}</p>
                         {initialExampleSlug !== example.slug && (
                           <span className="mt-2 inline-flex rounded-full border border-[var(--line)] bg-stone-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
-                            Sample
+                            {labels.sample}
                           </span>
                         )}
                       </a>
