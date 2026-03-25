@@ -134,6 +134,10 @@ function App({
   const deferredSearch = useDeferredValue(search)
   const activeReport = reports.find((report) => report.id === activeReportId) ?? reports[0] ?? null
   const derived = activeReport ? deriveReport(activeReport, knownWords) : null
+  const savedReportFileNames = new Set(reports.map((report) => report.fileName))
+  const availableExampleNovels = exampleNovels.filter(
+    (example) => !savedReportFileNames.has(example.fileName),
+  )
 
   let visibleRows = derived?.vocabulary ?? []
   if (derived) {
@@ -389,16 +393,21 @@ function App({
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Example novels</p>
                   <div className="mt-3 grid gap-3">
-                    {exampleNovels.map((example) => (
-                      <a
-                        key={example.slug}
-                        className={`rounded-[22px] border px-4 py-4 transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-white ${initialExampleSlug === example.slug ? 'border-[var(--accent)] bg-amber-50/80' : 'border-[var(--line)] bg-white/80'}`}
-                        href={exampleHref(example.slug)}
-                      >
-                        <p className="font-semibold text-[var(--ink)]">{example.title}</p>
-                        <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{example.caption}</p>
-                      </a>
-                    ))}
+                    {availableExampleNovels.length === 0 ? (
+                      <p className="rounded-[22px] border border-[var(--line)] bg-white/80 px-4 py-4 text-sm text-[var(--muted)]">
+                        All samples are already saved.
+                      </p>
+                    ) : (
+                      availableExampleNovels.map((example) => (
+                        <a
+                          key={example.slug}
+                          className={`rounded-[22px] border px-4 py-4 transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-white ${initialExampleSlug === example.slug ? 'border-[var(--accent)] bg-amber-50/80' : 'border-[var(--line)] bg-white/80'}`}
+                          href={exampleHref(example.slug)}
+                        >
+                          <p className="font-semibold text-[var(--ink)]">{example.title}</p>
+                        </a>
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -872,16 +881,26 @@ function App({
                   Upload a plain text file to see vocabulary size, CEFR distribution, known-word coverage, key words, and a complete word table that you can use to grow your reading comfort.
                 </p>
                 <div className="mx-auto mt-8 grid max-w-4xl gap-3 text-left sm:grid-cols-2">
-                  {exampleNovels.map((example) => (
-                    <a
-                      key={example.slug}
-                      className="rounded-[24px] border border-[var(--line)] bg-white/80 px-5 py-4 transition hover:-translate-y-0.5 hover:border-[var(--accent)]"
-                      href={exampleHref(example.slug)}
-                    >
-                      <p className="font-semibold text-[var(--ink)]">{example.title}</p>
-                      <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{example.caption}</p>
-                    </a>
-                  ))}
+                  {availableExampleNovels.length === 0 ? (
+                    <p className="sm:col-span-2 rounded-[24px] border border-[var(--line)] bg-white/80 px-5 py-4 text-sm text-[var(--muted)]">
+                      All samples are already saved.
+                    </p>
+                  ) : (
+                    availableExampleNovels.map((example) => (
+                      <a
+                        key={example.slug}
+                        className="rounded-[24px] border border-[var(--line)] bg-white/80 px-5 py-4 transition hover:-translate-y-0.5 hover:border-[var(--accent)]"
+                        href={exampleHref(example.slug)}
+                      >
+                        <p className="font-semibold text-[var(--ink)]">{example.title}</p>
+                        {initialExampleSlug !== example.slug && (
+                          <span className="mt-2 inline-flex rounded-full border border-[var(--line)] bg-stone-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+                            Sample
+                          </span>
+                        )}
+                      </a>
+                    ))
+                  )}
                 </div>
               </div>
             )}
