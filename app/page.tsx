@@ -9,6 +9,7 @@ type PageProps = {
 }
 
 export default async function Page({ searchParams }: PageProps) {
+  const novelsDir = path.join(process.cwd(), 'novels')
   const resolvedSearchParams = searchParams ? await searchParams : {}
   const rawExample = resolvedSearchParams.example
   const exampleSlug = Array.isArray(rawExample) ? (rawExample[0] ?? null) : (rawExample ?? null)
@@ -23,7 +24,7 @@ export default async function Page({ searchParams }: PageProps) {
   }
 
   if (exampleNovel) {
-    const filePath = path.join(process.cwd(), exampleNovel.sourcePath)
+    const filePath = path.join(novelsDir, exampleNovel.fileName)
 
     try {
       const text = await readFile(filePath, 'utf8')
