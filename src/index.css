@@ -1,0 +1,68 @@
+@import 'tailwindcss';
+
+:root {
+  --font-body: 'Avenir Next', 'Segoe UI', sans-serif;
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+  --font-mono: 'SFMono-Regular', 'Cascadia Code', 'JetBrains Mono', monospace;
+  --paper: #f7f0e1;
+  --ink: #1e2f2b;
+  --muted: #546862;
+  --line: rgba(30, 47, 43, 0.14);
+  --card: rgba(255, 252, 244, 0.74);
+  --accent: #c8662a;
+  --accent-strong: #11493e;
+  --shadow: 0 24px 80px rgba(17, 73, 62, 0.15);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(200, 102, 42, 0.18), transparent 30%),
+    radial-gradient(circle at top right, rgba(17, 73, 62, 0.16), transparent 35%),
+    linear-gradient(180deg, #fff8ec 0%, #f2ead8 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+::selection {
+  background: rgba(200, 102, 42, 0.22);
+}
+
+.glass-card {
+  background: var(--card);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+}
+
+.ink-grid {
+  background-image:
+    linear-gradient(rgba(30, 47, 43, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 47, 43, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.fade-up {
+  animation: fade-up 0.55s ease-out both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
