@@ -315,6 +315,12 @@ function App({
 
   const totalPages = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE))
   const safeCurrentPage = Math.min(currentPage, totalPages)
+  const PAGINATION_WINDOW = 5
+  const halfWindow = Math.floor(PAGINATION_WINDOW / 2)
+  let windowStart = Math.max(1, safeCurrentPage - halfWindow)
+  let windowEnd = Math.min(totalPages, windowStart + PAGINATION_WINDOW - 1)
+  windowStart = Math.max(1, windowEnd - PAGINATION_WINDOW + 1)
+  const visiblePageNumbers = Array.from({ length: windowEnd - windowStart + 1 }, (_, index) => windowStart + index)
   const pageStartIndex = (safeCurrentPage - 1) * PAGE_SIZE
   const pageEndIndex = pageStartIndex + PAGE_SIZE
   const pagedRows = visibleRows.slice(pageStartIndex, pageEndIndex)
@@ -925,25 +931,40 @@ function App({
                     <span>Tip: click one checkbox, then Shift-click another word to group select the range inside the current page.</span>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                     <button
                       type="button"
-                      className="rounded-2xl border border-[var(--line)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Previous page"
+                      className="h-12 w-12 rounded-full border border-stone-300 bg-white/80 text-2xl leading-none text-stone-500 transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40"
                       disabled={safeCurrentPage <= 1}
                       onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                     >
-                      Previous page
+                      &#8249;
                     </button>
-                    <span className="rounded-full border border-[var(--line)] bg-white/80 px-4 py-2 text-sm font-semibold text-[var(--ink)]">
-                      Page {safeCurrentPage} / {totalPages}
-                    </span>
+
+                    {visiblePageNumbers.map((pageNumber) => {
+                      const isActive = pageNumber === safeCurrentPage
+                      return (
+                        <button
+                          key={pageNumber}
+                          type="button"
+                          aria-label={`Go to page ${pageNumber}`}
+                          className={`h-12 w-12 rounded-full border text-3xl font-semibold leading-none transition ${isActive ? 'border-[var(--accent)] bg-[var(--accent)] text-white' : 'border-stone-300 bg-white/80 text-stone-500 hover:border-[var(--accent)] hover:text-[var(--accent)]'}`}
+                          onClick={() => setCurrentPage(pageNumber)}
+                        >
+                          {pageNumber}
+                        </button>
+                      )
+                    })}
+
                     <button
                       type="button"
-                      className="rounded-2xl border border-[var(--line)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Next page"
+                      className="h-12 w-12 rounded-full border border-stone-300 bg-white/80 text-2xl leading-none text-stone-500 transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40"
                       disabled={safeCurrentPage >= totalPages}
                       onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                     >
-                      Next page
+                      &#8250;
                     </button>
                   </div>
 
