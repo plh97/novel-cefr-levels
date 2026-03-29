@@ -21,7 +21,8 @@
     "react-i18next": "^17.0.1",
     "tailwindcss": "^4.2.2",
     "vocabulary-level-grader": "^1.1.0",
-    "vocabulary-list-statistics": "^1.0.12"
+    "vocabulary-list-statistics": "^1.0.12",
+    "wink-lemmatizer": "^3.0.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

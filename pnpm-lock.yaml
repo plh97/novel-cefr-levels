@@ -38,6 +38,9 @@ importers:
       vocabulary-list-statistics:
         specifier: ^1.0.12
         version: 1.0.12
+      wink-lemmatizer:
+        specifier: ^3.0.4
+        version: 3.0.4
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.4

@@ -1,4 +1,5 @@
 import vocabularyRanks from 'vocabulary-list-statistics'
+import lemmatizer from 'wink-lemmatizer'
 import { CEFR_ORDER, type CefrLevel } from './cefr'
 
 type CefrStats = {
@@ -232,6 +233,48 @@ const IRREGULAR_SINGULARS = new Map<string, string>([
   ['geese', 'goose'],
 ])
 
+const IRREGULAR_VERB_FORMS = new Set([
+  'ate',
+  'began',
+  'bought',
+  'came',
+  'did',
+  'done',
+  'drank',
+  'driven',
+  'drove',
+  'fell',
+  'felt',
+  'found',
+  'gave',
+  'gone',
+  'got',
+  'had',
+  'has',
+  'heard',
+  'held',
+  'knew',
+  'known',
+  'made',
+  'ran',
+  'said',
+  'sang',
+  'sat',
+  'saw',
+  'seen',
+  'spent',
+  'spoke',
+  'spoken',
+  'stood',
+  'swam',
+  'taken',
+  'took',
+  'told',
+  'thought',
+  'wrote',
+  'written',
+])
+
 const CONTRACTION_EXPANSIONS = new Map<string, string[]>([
   ["i'm", ['i', 'am']],
   ["you're", ['you', 'are']],
@@ -317,12 +360,29 @@ function singularizeToken(token: string): string {
   return token
 }
 
+function lemmatizeVerbToken(token: string): string {
+  if (token.length <= 3 || STOPWORDS.has(token)) {
+    return token
+  }
+
+  if (token.endsWith('ied') || token.endsWith('ed') || IRREGULAR_VERB_FORMS.has(token)) {
+    return lemmatizer.lemmatizeVerb(token)
+  }
+
+  if (token.endsWith('ing') && token.length > 5) {
+    if (rankMap.has(token)) {
+      return token
+    }
+
+    return lemmatizer.lemmatizeVerb(token)
+  }
+
+  return token
+}
+
 function canonicalizeToken(token: string): string {
   const singular = singularizeToken(token)
-  if (singular !== token) {
-    return singular
-  }
-  return token
+  return lemmatizeVerbToken(singular)
 }
 
 function expandToken(token: string): string[] {

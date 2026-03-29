@@ -2,10 +2,11 @@ import {
   startTransition,
   useDeferredValue,
   useEffect,
+  useMemo,
   useState,
   type MouseEvent,
 } from 'react'
-import { Button, Checkbox, Input, Pagination, Segmented, Table, Tag, Upload } from 'antd'
+import { Button, Checkbox, Input, Pagination, Segmented, Select, Table, Tag, Upload } from 'antd'
 import type { TableColumnsType, TableProps } from 'antd'
 import type { UploadProps } from 'antd'
 import { useAtom } from 'jotai'
@@ -16,6 +17,7 @@ import {
 } from './lib/analyzer'
 import { CEFR_ORDER } from './lib/cefr'
 import { analyzeTextInWorker } from './lib/analyzer-client'
+import { splitTextIntoChapters, type ChapterChunk } from './lib/chapter-split'
 import { deriveReport, parseWordList } from './lib/report-view'
 import type { ExampleNovel } from './lib/examples'
 import ExampleNovelList from './components/ExampleNovelList'
@@ -162,6 +164,12 @@ function App({ exampleNovels = [] }: AppProps) {
   const [selectionAnchor, setSelectionAnchor] = useState<string | null>(null)
   const [rangeSelectionCount, setRangeSelectionCount] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
+  const [chapterItemsByReportId, setChapterItemsByReportId] = useState<Record<string, ChapterChunk[]>>({})
+  const [selectedChapterId, setSelectedChapterId] = useState('full')
+  const [selectedChapterReport, setSelectedChapterReport] = useState<AnalysisReport | null>(null)
+  const [chapterReportCacheByReportId, setChapterReportCacheByReportId] = useState<
+    Record<string, Record<string, AnalysisReport>>
+  >({})
   const uiLanguage: SupportedLanguage = i18n.resolvedLanguage === 'zh' ? 'zh' : 'en'
   const labels = resources[uiLanguage].translation
   const [status, setStatus] = useState<string>(labels.statusIdle)
@@ -184,7 +192,23 @@ function App({ exampleNovels = [] }: AppProps) {
   const activeReport = activeReportId == null
     ? null
     : reports.find((report) => report.id === activeReportId) ?? null
-  const derived = activeReport ? deriveReport(activeReport, knownWords) : null
+  const currentChapterItems = useMemo(
+    () => (activeReport ? (chapterItemsByReportId[activeReport.id] ?? []) : []),
+    [activeReport, chapterItemsByReportId],
+  )
+  const displayReport = selectedChapterReport ?? activeReport
+  const derived = displayReport ? deriveReport(displayReport, knownWords) : null
+  const hasChapterSelector = Boolean(activeReport && currentChapterItems.length > 0)
+  const chapterOptions = useMemo(
+    () => [
+      { label: labels.wholeBook, value: 'full' },
+      ...currentChapterItems.map((chapter) => ({
+        label: `${chapter.heading} - ${chapter.title}`,
+        value: chapter.id,
+      })),
+    ],
+    [currentChapterItems, labels.wholeBook],
+  )
   const savedReportFileNames = new Set(reports.map((report) => report.fileName))
   const availableExampleNovels = exampleNovels.filter(
     (example) => !savedReportFileNames.has(example.fileName),
@@ -253,6 +277,10 @@ function App({ exampleNovels = [] }: AppProps) {
     const existingReport = reports.find((report) => report.id === `example:${selectedExample.slug}`)
     if (existingReport) {
       setActiveReportId(existingReport.id)
+      if (!chapterItemsByReportId[existingReport.id]?.length) {
+        setSelectedChapterId('full')
+        setSelectedChapterReport(null)
+      }
       setStatus(
         uiLanguage === 'zh'
           ? `已加载示例：${selectedExample.title}。`
@@ -286,6 +314,7 @@ function App({ exampleNovels = [] }: AppProps) {
 
         setReports((previous) => [report, ...previous.filter((item) => item.id !== report.id)].slice(0, 12))
         setActiveReportId(report.id)
+        bindSourceTextToReport(report.id, text)
         setSelectedWords([])
         setViewMode('unknown')
         setStatus(
@@ -314,7 +343,7 @@ function App({ exampleNovels = [] }: AppProps) {
     return () => {
       cancelled = true
     }
-  }, [activeExampleSlug, exampleNovels, reports, setActiveReportId, setReports, setSelectedWords, uiLanguage])
+  }, [activeExampleSlug, chapterItemsByReportId, exampleNovels, reports, setActiveReportId, setReports, setSelectedWords, uiLanguage])
 
   const totalPages = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE))
   const safeCurrentPage = Math.min(currentPage, totalPages)
@@ -336,6 +365,7 @@ function App({ exampleNovels = [] }: AppProps) {
         startTransition(() => {
           setReports((previous) => [report, ...previous.filter((item) => item.id !== report.id)].slice(0, 12))
           setActiveReportId(report.id)
+          bindSourceTextToReport(report.id, text)
           replaceExampleSlug(null)
           setActiveExampleSlug(null)
           setSelectedWords([])
@@ -448,8 +478,20 @@ function App({ exampleNovels = [] }: AppProps) {
 
   function deleteReport(reportId: string) {
     setReports((previous) => previous.filter((report) => report.id !== reportId))
+    setChapterItemsByReportId((previous) => {
+      const next = { ...previous }
+      delete next[reportId]
+      return next
+    })
+    setChapterReportCacheByReportId((previous) => {
+      const next = { ...previous }
+      delete next[reportId]
+      return next
+    })
     if (activeReportId === reportId) {
       setActiveReportId(null)
+      setSelectedChapterId('full')
+      setSelectedChapterReport(null)
     }
 
     if (reportId === `example:${activeExampleSlug}`) {
@@ -461,6 +503,81 @@ function App({ exampleNovels = [] }: AppProps) {
   function handleExampleSelect(slug: string) {
     replaceExampleSlug(slug)
     setActiveExampleSlug(slug)
+  }
+
+  function bindSourceTextToReport(reportId: string, text: string) {
+    const chapterItems = splitTextIntoChapters(text)
+    setChapterItemsByReportId((previous) => ({
+      ...previous,
+      [reportId]: chapterItems,
+    }))
+    setSelectedChapterId('full')
+    setSelectedChapterReport(null)
+    setChapterReportCacheByReportId((previous) => ({
+      ...previous,
+      [reportId]: {},
+    }))
+  }
+
+  async function handleChapterChange(nextChapterId: string) {
+    setSelectedChapterId(nextChapterId)
+
+    if (nextChapterId === 'full') {
+      setSelectedChapterReport(null)
+      return
+    }
+
+    if (!activeReport) {
+      setSelectedChapterReport(null)
+      return
+    }
+
+    const reportCache = chapterReportCacheByReportId[activeReport.id] ?? {}
+    const cached = reportCache[nextChapterId]
+    if (cached) {
+      setSelectedChapterReport(cached)
+      return
+    }
+
+    const chapter = currentChapterItems.find((item) => item.id === nextChapterId)
+    if (!chapter) {
+      setSelectedChapterReport(null)
+      return
+    }
+
+    setIsAnalyzing(true)
+    setStatus(
+      uiLanguage === 'zh'
+        ? `正在分析章节：${chapter.title}...`
+        : `Analyzing chapter: ${chapter.title}...`,
+    )
+
+    try {
+      const chapterReport = await analyzeTextInWorker(chapter.text, `${activeReport.fileName} - ${chapter.title}`)
+      setSelectedChapterReport(chapterReport)
+      setChapterReportCacheByReportId((previous) => ({
+        ...previous,
+        [activeReport.id]: {
+          ...(previous[activeReport.id] ?? {}),
+          [nextChapterId]: chapterReport,
+        },
+      }))
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : (uiLanguage === 'zh' ? '章节分析失败。' : 'Failed to analyze chapter.'),
+      )
+      setSelectedChapterReport(null)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  function handleSelectSavedReport(reportId: string) {
+    setActiveReportId(reportId)
+    setSelectedChapterId('full')
+    setSelectedChapterReport(null)
   }
 
   const uploadProps: UploadProps = {
@@ -654,6 +771,10 @@ function App({ exampleNovels = [] }: AppProps) {
                     onClick={() => {
                       setReports([])
                       setActiveReportId(null)
+                      setChapterItemsByReportId({})
+                      setSelectedChapterId('full')
+                      setSelectedChapterReport(null)
+                      setChapterReportCacheByReportId({})
                       replaceExampleSlug(null)
                       setActiveExampleSlug(null)
                       setSelectedWords([])
@@ -736,24 +857,68 @@ function App({ exampleNovels = [] }: AppProps) {
                   reports.map((report) => (
                     <div
                       key={report.id}
-                      className={`rounded-[22px] border p-4 ${activeReport?.id === report.id ? 'border-[var(--accent)] bg-white' : 'border-[var(--line)] bg-white/70'}`}
+                      className={`cursor-pointer rounded-[22px] border p-4 ${activeReport?.id === report.id ? 'border-[var(--accent)] bg-white' : 'border-[var(--line)] bg-white/70'}`}
+                      onClick={() => handleSelectSavedReport(report.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          handleSelectSavedReport(report.id)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                     >
-                      <Button
-                        type="text"
+                      <div
                         className="w-full text-left"
-                        onClick={() => setActiveReportId(report.id)}
                       >
                         <p className="line-clamp-2 text-sm font-semibold leading-6 text-[var(--ink)]">{report.fileName}</p>
                         <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
                           {formatDate(report.createdAt, uiLanguage)}
                         </p>
-                      </Button>
+                      </div>
                       <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--muted)]">
                         <span>{report.uniqueVocabulary} {labels.wordsUnit}</span>
-                        <Button type="text" danger className="font-semibold" onClick={() => deleteReport(report.id)}>
+                        <Button
+                          className="font-semibold cursor-pointer"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            deleteReport(report.id)
+                          }}
+                        >
                           {labels.remove}
                         </Button>
                       </div>
+
+                      {activeReport?.id === report.id && currentChapterItems.length > 0 && (
+                        <div
+                          className="mt-3 border-t border-[var(--line)] pt-3"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
+                            {labels.chapterSelector}
+                          </p>
+                          <div className="flex max-h-36 flex-wrap gap-2 overflow-auto pr-1">
+                            <Button
+                              size="small"
+                              type={selectedChapterId === 'full' ? 'primary' : 'default'}
+                              onClick={() => void handleChapterChange('full')}
+                            >
+                              {labels.wholeBook}
+                            </Button>
+
+                            {currentChapterItems.map((chapter) => (
+                              <Button
+                                key={chapter.id}
+                                size="small"
+                                type={selectedChapterId === chapter.id ? 'primary' : 'default'}
+                                onClick={() => void handleChapterChange(chapter.id)}
+                              >
+                                {chapter.title}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
@@ -860,14 +1025,28 @@ function App({ exampleNovels = [] }: AppProps) {
                       <h3 className="mt-2 font-[var(--font-display)] text-3xl tracking-[-0.04em]">{labels.vocabularyTableTitle}</h3>
                     </div>
 
-                    <Segmented<ViewMode>
-                      options={viewLabels.map((item) => ({
-                        label: item.label,
-                        value: item.value,
-                      }))}
-                      value={viewMode}
-                      onChange={(value) => setViewMode(value)}
-                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                      {hasChapterSelector && (
+                        <div className="min-w-64">
+                          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">{labels.chapterSelector}</p>
+                          <Select
+                            className="w-full"
+                            value={selectedChapterId}
+                            options={chapterOptions}
+                            onChange={(value) => void handleChapterChange(value)}
+                          />
+                        </div>
+                      )}
+
+                      <Segmented<ViewMode>
+                        options={viewLabels.map((item) => ({
+                          label: item.label,
+                          value: item.value,
+                        }))}
+                        value={viewMode}
+                        onChange={(value) => setViewMode(value)}
+                      />
+                    </div>
                   </div>
 
                   <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto]">
