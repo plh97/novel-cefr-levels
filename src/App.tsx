@@ -785,20 +785,17 @@ function App({ exampleNovels = [] }: AppProps) {
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">{labels.language}</span>
-                  <Button
+                  <Segmented<SupportedLanguage>
                     size="small"
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${uiLanguage === 'en' ? 'border-[var(--accent)] bg-[var(--accent)] text-white' : 'border-[var(--line)] bg-white/80 text-[var(--ink)]'}`}
-                    onClick={() => void i18n.changeLanguage('en')}
-                  >
-                    EN
-                  </Button>
-                  <Button
-                    size="small"
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${uiLanguage === 'zh' ? 'border-[var(--accent)] bg-[var(--accent)] text-white' : 'border-[var(--line)] bg-white/80 text-[var(--ink)]'}`}
-                    onClick={() => void i18n.changeLanguage('zh')}
-                  >
-                    中文
-                  </Button>
+                    value={uiLanguage}
+                    options={[
+                      { label: 'EN', value: 'en' },
+                      { label: '中文', value: 'zh' },
+                    ]}
+                    onChange={(value) => {
+                      void i18n.changeLanguage(value)
+                    }}
+                  />
                 </div>
               </div>
               <div className="space-y-4">

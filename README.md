@@ -1,5 +1,11 @@
 # Are you able to read this novel?
 
+## Project note
+
+- Zero hand-code project.
+- All code in this repository was generated and iterated by AI from product requirements.
+- Human input is mainly prompts, validation, and direction.
+
 ## Todo list
 
 1. there a input. box upload text file of book
