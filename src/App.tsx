@@ -724,7 +724,7 @@ function App({ exampleNovels = [] }: AppProps) {
       title: labels.tableWord,
       dataIndex: 'word',
       key: 'word',
-      width: 260,
+      width: 220,
       render: (_, entry) => (
         <div className="flex flex-wrap items-center gap-3">
           <span className="font-semibold text-[var(--ink)]">{entry.word}</span>
@@ -745,13 +745,14 @@ function App({ exampleNovels = [] }: AppProps) {
       dataIndex: 'count',
       key: 'count',
       width: 110,
+      responsive: ['sm'],
       render: (value: number) => <span className="text-[var(--muted)]">{value.toLocaleString()}</span>,
     },
     {
       title: labels.cefr,
       dataIndex: 'cefr',
       key: 'cefr',
-      width: 100,
+      width: 84,
       render: (value: string) => (
         <Tag>{value}</Tag>
       ),
@@ -761,6 +762,7 @@ function App({ exampleNovels = [] }: AppProps) {
       dataIndex: 'rank',
       key: 'rank',
       width: 120,
+      responsive: ['md'],
       render: (value: number | null) => <span className="text-[var(--muted)]">{value?.toLocaleString() ?? '—'}</span>,
     },
     {
@@ -768,6 +770,7 @@ function App({ exampleNovels = [] }: AppProps) {
       dataIndex: 'word',
       key: 'tags',
       width: 260,
+      responsive: ['lg'],
       render: (_, entry) => renderTags(entry, labels),
     },
   ]
@@ -783,10 +786,11 @@ function App({ exampleNovels = [] }: AppProps) {
                 <span className="inline-flex rounded-full border border-[var(--line)] bg-white/60 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent-strong)]">
                   {labels.badge}
                 </span>
-                <div className="flex items-center gap-2">
+                <div className="grid w-full gap-2 sm:flex sm:w-auto sm:items-center">
                   <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">{labels.language}</span>
                   <Segmented<SupportedLanguage>
                     size="small"
+                    className="w-full sm:w-auto"
                     value={uiLanguage}
                     options={[
                       { label: 'EN', value: 'en' },
@@ -799,7 +803,7 @@ function App({ exampleNovels = [] }: AppProps) {
                 </div>
               </div>
               <div className="space-y-4">
-                <h1 className="max-w-4xl font-[var(--font-display)] text-4xl leading-none tracking-[-0.05em] text-[var(--ink)] sm:text-5xl lg:text-7xl">
+                <h1 className="max-w-4xl font-[var(--font-display)] text-4xl leading-none tracking-[-0.05em] text-[var(--ink)] sm:text-5xl lg:text-6xl">
                   {labels.heroTitle}
                 </h1>
                 <p className="max-w-2xl text-base leading-7 text-[var(--muted)] sm:text-lg">
@@ -987,10 +991,11 @@ function App({ exampleNovels = [] }: AppProps) {
                           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">
                             {labels.chapterSelector}
                           </p>
-                          <div className="flex max-h-36 flex-wrap gap-2 overflow-auto pr-1">
+                          <div className="grid max-h-44 grid-cols-1 gap-2 overflow-auto pr-1 sm:grid-cols-2">
                             <Button
                               size="small"
                               type={selectedChapterId === 'full' ? 'primary' : 'default'}
+                              className="w-full min-w-0"
                               onClick={() => void handleChapterChange('full')}
                             >
                               {labels.wholeBook}
@@ -1001,6 +1006,8 @@ function App({ exampleNovels = [] }: AppProps) {
                                 key={chapter.id}
                                 size="small"
                                 type={selectedChapterId === chapter.id ? 'primary' : 'default'}
+                                className="w-full min-w-0 truncate"
+                                title={`${chapter.heading} - ${chapter.title}`}
                                 onClick={() => void handleChapterChange(chapter.id)}
                               >
                                 {chapter.title}
@@ -1115,9 +1122,9 @@ function App({ exampleNovels = [] }: AppProps) {
                       <h3 className="mt-2 font-[var(--font-display)] text-3xl tracking-[-0.04em]">{labels.vocabularyTableTitle}</h3>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="grid w-full gap-3 sm:flex sm:flex-wrap sm:items-center xl:w-auto">
                       {hasChapterSelector && (
-                        <div className="min-w-64">
+                        <div className="w-full sm:min-w-64 sm:flex-1 xl:flex-none">
                           <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">{labels.chapterSelector}</p>
                           <Select
                             className="w-full"
@@ -1129,6 +1136,7 @@ function App({ exampleNovels = [] }: AppProps) {
                       )}
 
                       <Segmented<ViewMode>
+                        className="w-full sm:w-auto"
                         options={viewLabels.map((item) => ({
                           label: item.label,
                           value: item.value,
@@ -1223,7 +1231,7 @@ function App({ exampleNovels = [] }: AppProps) {
                       pagination={false}
                       rowKey="word"
                       rowSelection={rowSelection}
-                      scroll={{ x: 960 }}
+                      scroll={{ x: 'max-content' }}
                       onRow={(entry) => ({
                         onClick: (event) => handleItemClick(entry.word, entry.isKnown, event),
                       })}

@@ -66,3 +66,28 @@ body {
     transform: translateY(0);
   }
 }
+
+@media (max-width: 768px) {
+  body {
+    background: linear-gradient(180deg, #fff8ec 0%, #f2ead8 100%);
+  }
+
+  .ink-grid {
+    background-image: none;
+  }
+
+  .glass-card {
+    backdrop-filter: none;
+    box-shadow: 0 8px 24px rgba(17, 73, 62, 0.08);
+  }
+
+  .fade-up {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    animation: none;
+  }
+}
