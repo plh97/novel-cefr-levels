@@ -25,4 +25,5 @@
 
 ## Screenshop
 
-<img width="3420" height="1730" alt="image" src="https://github.com/user-attachments/assets/578a6048-7885-4ccb-a428-4c979c32d3bb" />
+<img width="1346" height="1704" alt="image" src="https://github.com/user-attachments/assets/700f0c50-566a-43cd-938a-4117afac9444" />
+
