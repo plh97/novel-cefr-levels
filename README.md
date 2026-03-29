@@ -28,8 +28,10 @@
    5. jotai
    6. antd design UI Lib if necessary
 
-
-## Screenshop
+## Screenshot
 
 <img width="1346" height="1704" alt="image" src="https://github.com/user-attachments/assets/700f0c50-566a-43cd-938a-4117afac9444" />
 
+## Showcase
+
+![Demo](./20260329180302_rec_.gif)
