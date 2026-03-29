@@ -3,6 +3,7 @@ import {
   useDeferredValue,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type MouseEvent,
 } from 'react'
@@ -17,6 +18,7 @@ import {
 } from './lib/analyzer'
 import { CEFR_ORDER } from './lib/cefr'
 import { analyzeTextInWorker } from './lib/analyzer-client'
+import { deleteStoredChapters, loadStoredChapters, saveStoredChapters } from './lib/chapter-store'
 import { splitTextIntoChapters, type ChapterChunk } from './lib/chapter-split'
 import { deriveReport, parseWordList } from './lib/report-view'
 import type { ExampleNovel } from './lib/examples'
@@ -170,6 +172,7 @@ function App({ exampleNovels = [] }: AppProps) {
   const [chapterReportCacheByReportId, setChapterReportCacheByReportId] = useState<
     Record<string, Record<string, AnalysisReport>>
   >({})
+  const chapterHydrationInFlight = useRef(new Set<string>())
   const uiLanguage: SupportedLanguage = i18n.resolvedLanguage === 'zh' ? 'zh' : 'en'
   const labels = resources[uiLanguage].translation
   const [status, setStatus] = useState<string>(labels.statusIdle)
@@ -258,6 +261,64 @@ function App({ exampleNovels = [] }: AppProps) {
       window.removeEventListener('popstate', handlePopState)
     }
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    for (const report of reports) {
+      if (report.id in chapterItemsByReportId || chapterHydrationInFlight.current.has(report.id)) {
+        continue
+      }
+
+      chapterHydrationInFlight.current.add(report.id)
+
+      void loadStoredChapters(report.id)
+        .then((storedChapters) => {
+          if (cancelled) {
+            return
+          }
+
+          setChapterItemsByReportId((previous) => {
+            if (report.id in previous) {
+              return previous
+            }
+
+            return {
+              ...previous,
+              [report.id]: storedChapters ?? [],
+            }
+          })
+
+          setChapterReportCacheByReportId((previous) => {
+            if (report.id in previous) {
+              return previous
+            }
+
+            return {
+              ...previous,
+              [report.id]: {},
+            }
+          })
+        })
+        .finally(() => {
+          chapterHydrationInFlight.current.delete(report.id)
+        })
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [chapterItemsByReportId, reports])
+
+  useEffect(() => {
+    for (const [reportId, chapterItems] of Object.entries(chapterItemsByReportId)) {
+      if (chapterItems.length === 0) {
+        continue
+      }
+
+      void saveStoredChapters(reportId, chapterItems)
+    }
+  }, [chapterItemsByReportId])
 
   useEffect(() => {
     if (!activeExampleSlug) {
@@ -498,6 +559,8 @@ function App({ exampleNovels = [] }: AppProps) {
       replaceExampleSlug(null)
       setActiveExampleSlug(null)
     }
+
+    void deleteStoredChapters(reportId)
   }
 
   function handleExampleSelect(slug: string) {
@@ -517,6 +580,10 @@ function App({ exampleNovels = [] }: AppProps) {
       ...previous,
       [reportId]: {},
     }))
+
+    if (chapterItems.length > 0) {
+      void saveStoredChapters(reportId, chapterItems)
+    }
   }
 
   async function handleChapterChange(nextChapterId: string) {
