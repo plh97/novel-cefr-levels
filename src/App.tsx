@@ -15,6 +15,7 @@ import {
   type AnalysisReport,
 } from './lib/analyzer'
 import { CEFR_ORDER } from './lib/cefr'
+import { analyzeTextInWorker } from './lib/analyzer-client'
 import { deriveReport, parseWordList } from './lib/report-view'
 import type { ExampleNovel } from './lib/examples'
 import ExampleNovelList from './components/ExampleNovelList'
@@ -180,7 +181,9 @@ function App({ exampleNovels = [] }: AppProps) {
   ]
 
   const deferredSearch = useDeferredValue(search)
-  const activeReport = reports.find((report) => report.id === activeReportId) ?? reports[0] ?? null
+  const activeReport = activeReportId == null
+    ? null
+    : reports.find((report) => report.id === activeReportId) ?? null
   const derived = activeReport ? deriveReport(activeReport, knownWords) : null
   const savedReportFileNames = new Set(reports.map((report) => report.fileName))
   const availableExampleNovels = exampleNovels.filter(
@@ -278,7 +281,7 @@ function App({ exampleNovels = [] }: AppProps) {
           return
         }
 
-        const report = (await import('./lib/analyzer')).analyzeText(text, selectedExample.fileName)
+        const report = await analyzeTextInWorker(text, selectedExample.fileName)
         report.id = `example:${selectedExample.slug}`
 
         setReports((previous) => [report, ...previous.filter((item) => item.id !== report.id)].slice(0, 12))
@@ -328,10 +331,9 @@ function App({ exampleNovels = [] }: AppProps) {
 
     try {
       const text = await file.text()
+      const report: AnalysisReport = await analyzeTextInWorker(text, file.name)
       requestAnimationFrame(() => {
-        startTransition(async () => {
-          const analyzer = await import('./lib/analyzer')
-          const report: AnalysisReport = analyzer.analyzeText(text, file.name)
+        startTransition(() => {
           setReports((previous) => [report, ...previous.filter((item) => item.id !== report.id)].slice(0, 12))
           setActiveReportId(report.id)
           replaceExampleSlug(null)
@@ -447,8 +449,7 @@ function App({ exampleNovels = [] }: AppProps) {
   function deleteReport(reportId: string) {
     setReports((previous) => previous.filter((report) => report.id !== reportId))
     if (activeReportId === reportId) {
-      const next = reports.find((report) => report.id !== reportId) ?? null
-      setActiveReportId(next?.id ?? null)
+      setActiveReportId(null)
     }
 
     if (reportId === `example:${activeExampleSlug}`) {

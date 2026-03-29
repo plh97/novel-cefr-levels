@@ -1,4 +1,3 @@
-import chamberUrl from '../../novels/HARRY POTTER AND THE CHAMBER OF SECRETS.txt?url'
 import gobletUrl from '../../novels/Harry Potter and the Goblet of Fire.txt?url'
 import prisonerUrl from '../../novels/Harry Potter and the Prisoner of Azkaban.txt?url'
 import sorcererStoneUrl from '../../novels/Harry Potter and the Sorcerer\'s Stone.txt?url'
@@ -20,14 +19,6 @@ export const EXAMPLE_NOVELS: ExampleNovel[] = [
     sourcePath: 'novels/Harry Potter and the Sorcerer\'s Stone.txt',
     fileName: 'Harry Potter and the Sorcerer\'s Stone.txt',
     assetUrl: sorcererStoneUrl,
-  },
-  {
-    slug: 'novel-2',
-    title: 'HARRY POTTER AND THE CHAMBER OF SECRETS',
-    caption: 'Example analysis from novels/HARRY POTTER AND THE CHAMBER OF SECRETS',
-    sourcePath: 'novels/HARRY POTTER AND THE CHAMBER OF SECRETS.txt',
-    fileName: 'HARRY POTTER AND THE CHAMBER OF SECRETS.txt',
-    assetUrl: chamberUrl,
   },
   {
     slug: 'novel-3',
