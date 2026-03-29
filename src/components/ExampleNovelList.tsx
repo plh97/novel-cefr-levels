@@ -46,10 +46,10 @@ function ExampleNovelList({
         return (
           <Button
             key={example.slug}
-            className={`${buttonClassName} ${isActive ? activeButtonClassName : inactiveButtonClassName}`}
+            className={` ${buttonClassName} ${isActive ? activeButtonClassName : inactiveButtonClassName}`}
             onClick={() => onSelect(example.slug)}
           >
-            <p className="font-semibold text-[var(--ink)]">{example.title}</p>
+            <p className="font-semibold text-[var(--ink)] mb-0!">{example.title}</p>
             {showSampleBadge && !isActive && sampleLabel ? (
               <Tag className={emptySpanClassName ?? 'mt-2 inline-flex rounded-full border border-[var(--line)] bg-stone-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]'}>
                 {sampleLabel}

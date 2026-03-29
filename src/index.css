@@ -56,6 +56,26 @@ body {
   animation: fade-up 0.55s ease-out both;
 }
 
+.language-segmented.ant-segmented {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--line);
+}
+
+.language-segmented .ant-segmented-item {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.language-segmented .ant-segmented-item-selected {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(200, 102, 42, 0.26);
+}
+
+.language-segmented .ant-segmented-item-selected .ant-segmented-item-label {
+  color: #fff;
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;

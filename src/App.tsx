@@ -176,6 +176,9 @@ function App({ exampleNovels = [] }: AppProps) {
   const chapterHydrationInFlight = useRef(new Set<string>())
   const uiLanguage: SupportedLanguage = i18n.resolvedLanguage === 'zh' ? 'zh' : 'en'
   const labels = resources[uiLanguage].translation
+  const heroTitleClass = uiLanguage === 'zh'
+    ? 'max-w-4xl font-[var(--font-display)] text-4xl leading-[0.98] tracking-[-0.04em] text-[var(--ink)] sm:text-5xl lg:text-[3.45rem]'
+    : 'max-w-4xl font-[var(--font-display)] text-4xl leading-none tracking-[-0.05em] text-[var(--ink)] sm:text-5xl lg:text-6xl'
   const [status, setStatus] = useState<string>(labels.statusIdle)
 
   useEffect(() => {
@@ -790,7 +793,7 @@ function App({ exampleNovels = [] }: AppProps) {
                   <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">{labels.language}</span>
                   <Segmented<SupportedLanguage>
                     size="small"
-                    className="w-full sm:w-auto"
+                    className="language-segmented w-full sm:w-auto"
                     value={uiLanguage}
                     options={[
                       { label: 'EN', value: 'en' },
@@ -803,7 +806,7 @@ function App({ exampleNovels = [] }: AppProps) {
                 </div>
               </div>
               <div className="space-y-4">
-                <h1 className="max-w-4xl font-[var(--font-display)] text-4xl leading-none tracking-[-0.05em] text-[var(--ink)] sm:text-5xl lg:text-6xl">
+                <h1 className={heroTitleClass}>
                   {labels.heroTitle}
                 </h1>
                 <p className="max-w-2xl text-base leading-7 text-[var(--muted)] sm:text-lg">
@@ -838,6 +841,7 @@ function App({ exampleNovels = [] }: AppProps) {
                     </div>
                   </Upload.Dragger>
                 </div>
+                &nbsp;
 
                 <div className="rounded-[24px] border border-[var(--line)] bg-stone-950 px-4 py-4 text-stone-50">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">{labels.status}</p>
