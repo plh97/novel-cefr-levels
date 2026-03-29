@@ -10,3 +10,8 @@ declare module 'vocabulary-list-statistics' {
 
   export default value
 }
+
+declare module '*.txt?url' {
+  const value: string
+  export default value
+}

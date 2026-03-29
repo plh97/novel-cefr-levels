@@ -18,7 +18,7 @@
    1. react.js
    2. function component
    3. vite
-   4. tailwind css
+   4. plain css
    5. jotai
    6. antd design UI Lib if necessary
 
