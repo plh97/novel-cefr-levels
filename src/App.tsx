@@ -7,7 +7,7 @@ import {
   useState,
   type MouseEvent,
 } from 'react'
-import { Button, Checkbox, Input, Pagination, Segmented, Select, Table, Tag, Upload } from 'antd'
+import { Button, Checkbox, Input, Pagination, Segmented, Select, Table, Tag, Upload, message } from 'antd'
 import type { TableColumnsType, TableProps } from 'antd'
 import type { UploadProps } from 'antd'
 import { useAtom } from 'jotai'
@@ -152,6 +152,7 @@ function replaceExampleSlug(slug: string | null) {
 
 function App({ exampleNovels = [] }: AppProps) {
   const { i18n } = useTranslation()
+  const [messageApi, messageContextHolder] = message.useMessage()
   const [reports, setReports] = useAtom(reportsAtom)
   const [activeReportId, setActiveReportId] = useAtom(activeReportIdAtom)
   const [knownWords, setKnownWords] = useAtom(knownWordsAtom)
@@ -461,6 +462,21 @@ function App({ exampleNovels = [] }: AppProps) {
     setKnownWordsDraft('')
   }
 
+  async function copyKnownWordsToClipboard() {
+    if (knownWords.length === 0) {
+      setStatus(labels.copyKnownWordsEmpty)
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(knownWords.join(','))
+      setStatus(labels.copyKnownWordsSuccess)
+      void messageApi.success(labels.copyKnownWordsSuccess)
+    } catch {
+      setStatus(labels.copyKnownWordsFailed)
+    }
+  }
+
   function removeKnownWord(word: string) {
     setKnownWords((previous) => previous.filter((item) => item !== word))
   }
@@ -758,6 +774,7 @@ function App({ exampleNovels = [] }: AppProps) {
 
   return (
     <main className="ink-grid min-h-screen px-4 py-6 text-stone-900 sm:px-6 lg:px-10">
+      {messageContextHolder}
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <section className="fade-up glass-card overflow-hidden rounded-[32px] border border-[var(--line)]">
           <div className="grid gap-6 px-6 py-8 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-10">
@@ -863,13 +880,22 @@ function App({ exampleNovels = [] }: AppProps) {
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">{labels.knownVocabulary}</p>
                   <h2 className="mt-2 font-[var(--font-display)] text-3xl leading-none tracking-[-0.04em]">{knownWords.length}</h2>
                 </div>
-                <Button
-                  size="small"
-                  className="rounded-full border border-[var(--line)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]"
-                  onClick={() => setKnownWords([])}
-                >
-                  {labels.clear}
-                </Button>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button
+                    size="small"
+                    className="rounded-full border border-[var(--line)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]"
+                    onClick={copyKnownWordsToClipboard}
+                  >
+                    {labels.copyKnownWords}
+                  </Button>
+                  <Button
+                    size="small"
+                    className="rounded-full border border-[var(--line)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]"
+                    onClick={() => setKnownWords([])}
+                  >
+                    {labels.clear}
+                  </Button>
+                </div>
               </div>
 
               <Input.TextArea
